@@ -10,8 +10,7 @@ function App() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
-
-  const employeeId = 1; // temporary - hardcoded for now
+  const [currentEmployee, setCurrentEmployee] = useState(null);
 
   useEffect(() => {
     fetch('http://localhost:8080/api/hello')
@@ -23,7 +22,7 @@ function App() {
       });
 
     fetchEmployees();
-    fetchLeaveRequests();
+    fetchCurrentEmployee();
   }, []);
 
   const fetchEmployees = () => {
@@ -35,7 +34,19 @@ function App() {
       .catch((error) => console.error('Error fetching employees:', error));
   };
 
-  const fetchLeaveRequests = () => {
+  const fetchCurrentEmployee = () => {
+    fetch('http://localhost:8080/api/employees/me', {
+      headers: { Authorization: `Bearer ${keycloak.token}` },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setCurrentEmployee(data);
+        fetchLeaveRequests(data.id);
+      })
+      .catch((error) => console.error('Error fetching current employee:', error));
+  };
+
+  const fetchLeaveRequests = (employeeId) => {
     fetch(`http://localhost:8080/api/leave-requests/employee/${employeeId}`, {
       headers: { Authorization: `Bearer ${keycloak.token}` },
     })
@@ -45,7 +56,7 @@ function App() {
   };
 
   const handleClockIn = () => {
-    fetch(`http://localhost:8080/api/attendance/clock-in/${employeeId}`, {
+    fetch(`http://localhost:8080/api/attendance/clock-in/${currentEmployee.id}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${keycloak.token}` },
     })
@@ -58,7 +69,7 @@ function App() {
   };
 
   const handleClockOut = () => {
-    fetch(`http://localhost:8080/api/attendance/clock-out/${employeeId}`, {
+    fetch(`http://localhost:8080/api/attendance/clock-out/${currentEmployee.id}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${keycloak.token}` },
     })
@@ -72,7 +83,7 @@ function App() {
 
   const handleLeaveSubmit = (e) => {
     e.preventDefault();
-    fetch(`http://localhost:8080/api/leave-requests/${employeeId}`, {
+    fetch(`http://localhost:8080/api/leave-requests/${currentEmployee.id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -88,15 +99,19 @@ function App() {
         setStartDate('');
         setEndDate('');
         setReason('');
-        fetchLeaveRequests();
+        fetchLeaveRequests(currentEmployee.id);
       })
       .catch((error) => console.error('Error submitting leave request:', error));
   };
 
+  if (!currentEmployee) {
+    return <p>Loading your employee profile...</p>;
+  }
+
   return (
     <div>
       <h1>ClockSmart</h1>
-      <p>Welcome, {keycloak.tokenParsed?.preferred_username}!</p>
+      <p>Welcome, {currentEmployee.firstName} {currentEmployee.lastName}!</p>
       <p>Backend says: {message}</p>
 
       <h2>Clock In / Out</h2>

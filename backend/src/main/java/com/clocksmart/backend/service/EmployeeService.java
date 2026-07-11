@@ -29,4 +29,10 @@ public class EmployeeService {
     public void deleteEmployee(Long id) {
         employeeRepository.deleteById(id);
     }
+
+    public Employee getByUsername(String username) {
+        return employeeRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("No employee found for username: " + username));
+    }
+
 }
