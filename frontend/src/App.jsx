@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import keycloak from './keycloak';
 import './App.css';
+import Dashboard from './Dashboard';
 
 function App() {
   const [message, setMessage] = useState('Loading...');
@@ -143,6 +144,7 @@ function App() {
               {currentEmployee.firstName} {currentEmployee.lastName}
             </span>
           </div>
+        
           <button className="btn btn-ghost" onClick={() => keycloak.logout()}>
             Log out
           </button>
@@ -257,6 +259,10 @@ function App() {
               </li>
             ))}
           </ul>
+        </section>
+        <section className="card">
+          <h2 className="card-title">Performance Dashboard</h2>
+          <Dashboard />
         </section>
       </main>
     </div>
