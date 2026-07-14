@@ -7,6 +7,9 @@ import com.clocksmart.backend.repository.EmployeeRepository;
 import com.clocksmart.backend.repository.LeaveRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.HashMap;
+import java.util.Map;
+
 
 import java.util.List;
 
@@ -43,4 +46,17 @@ public class LeaveRequestService {
         request.setStatus(status);
         return leaveRequestRepository.save(request);
     }
+
+    public Map<String, Long> getLeaveRequestCountsByStatus() {
+        List<LeaveRequest> all = leaveRequestRepository.findAll();
+        Map<String, Long> counts = new HashMap<>();
+
+        for (LeaveRequest r : all) {
+            String status = r.getStatus().toString();
+            counts.merge(status, 1L, Long::sum);
+        }
+
+        return counts;
+    }
+
 }
