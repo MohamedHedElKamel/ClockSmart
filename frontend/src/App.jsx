@@ -90,8 +90,14 @@ function App() {
   };
 
   const handleLeaveSubmit = (e) => {
-    e.preventDefault();
-    fetch(`http://localhost:8080/api/leave-requests/${currentEmployee.id}`, {
+  e.preventDefault();
+
+  if (new Date(endDate) < new Date(startDate)) {
+    setStatus('Error: End date cannot be before start date.');
+    return;
+  }
+
+  fetch(`http://localhost:8080/api/leave-requests/${currentEmployee.id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
