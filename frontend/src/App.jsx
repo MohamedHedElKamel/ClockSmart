@@ -13,6 +13,7 @@ function App() {
   const [reason, setReason] = useState('');
   const [currentEmployee, setCurrentEmployee] = useState(null);
   const [now, setNow] = useState(new Date());
+  const [isClockedIn, setIsClockedIn] = useState(false);
 
   useEffect(() => {
     fetch('http://localhost:8080/api/hello')
@@ -63,31 +64,37 @@ function App() {
       .catch((error) => console.error('Error fetching leave requests:', error));
   };
 
-  const handleClockIn = () => {
-    fetch(`http://localhost:8080/api/attendance/clock-in/${currentEmployee.id}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${keycloak.token}` },
+ const handleClockIn = () => {
+  fetch(`http://localhost:8080/api/attendance/clock-in/${currentEmployee.id}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Clock-in failed');
+      return response.json();
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Clock-in failed');
-        return response.json();
-      })
-      .then((data) => setStatus(`Clocked in at ${data.clockIn}`))
-      .catch((error) => setStatus(`Error: ${error.message}`));
-  };
+    .then((data) => {
+      setStatus(`Clocked in at ${data.clockIn}`);
+      setIsClockedIn(true);
+    })
+    .catch((error) => setStatus(`Error: ${error.message}`));
+};
 
   const handleClockOut = () => {
-    fetch(`http://localhost:8080/api/attendance/clock-out/${currentEmployee.id}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${keycloak.token}` },
+  fetch(`http://localhost:8080/api/attendance/clock-out/${currentEmployee.id}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Clock-out failed');
+      return response.json();
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Clock-out failed');
-        return response.json();
-      })
-      .then((data) => setStatus(`Clocked out at ${data.clockOut}`))
-      .catch((error) => setStatus(`Error: ${error.message}`));
-  };
+    .then((data) => {
+      setStatus(`Clocked out at ${data.clockOut}`);
+      setIsClockedIn(false);
+    })
+    .catch((error) => setStatus(`Error: ${error.message}`));
+};
 
   const handleLeaveSubmit = (e) => {
   e.preventDefault();
@@ -173,10 +180,10 @@ function App() {
           </div>
 
           <div className="punch-actions">
-            <button className="btn btn-clockin" onClick={handleClockIn}>
-              Clock In
+            <button className="btn btn-clockin" onClick={handleClockIn} disabled={isClockedIn}>
+               Clock In
             </button>
-            <button className="btn btn-clockout" onClick={handleClockOut}>
+            <button className="btn btn-clockout" onClick={handleClockOut} disabled={!isClockedIn}>
               Clock Out
             </button>
           </div>
