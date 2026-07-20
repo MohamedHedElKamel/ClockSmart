@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import keycloak from './keycloak';
 import './App.css';
 import Dashboard from './Dashboard';
+import AiChat from './AiChat';
 
 function App() {
   const [message, setMessage] = useState('Loading...');
@@ -277,6 +278,12 @@ function App() {
           <h2 className="card-title">Performance Dashboard</h2>
           <Dashboard />
         </section>
+
+        <section className="card">
+          <h2 className="card-title">Ask ClockSmart AI</h2>
+          <AiChat />
+        </section>
+      
       </main>
     </div>
   );
