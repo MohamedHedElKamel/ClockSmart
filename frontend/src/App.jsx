@@ -15,19 +15,22 @@ function App() {
   const [currentEmployee, setCurrentEmployee] = useState(null);
   const [now, setNow] = useState(new Date());
   const [isClockedIn, setIsClockedIn] = useState(false);
+  const isAdmin = keycloak.hasRealmRole('admin');
 
-  useEffect(() => {
-    fetch('http://localhost:8080/api/hello')
-      .then((response) => response.text())
-      .then((data) => setMessage(data))
-      .catch((error) => {
-        console.error('Error fetching backend:', error);
-        setMessage('Failed to reach backend');
-      });
+useEffect(() => {
+  fetch('http://localhost:8080/api/hello')
+    .then((response) => response.text())
+    .then((data) => setMessage(data))
+    .catch((error) => {
+      console.error('Error fetching backend:', error);
+      setMessage('Failed to reach backend');
+    });
 
+  if (keycloak.hasRealmRole('admin')) {
     fetchEmployees();
-    fetchCurrentEmployee();
-  }, []);
+  }
+  fetchCurrentEmployee();
+}, []);
 
   // Live ticking clock for the punch-card display
   useEffect(() => {
@@ -255,25 +258,27 @@ function App() {
           </section>
         </div>
 
-        <section className="card">
-          <h2 className="card-title">Employees</h2>
-          <ul className="employee-list">
-            {employees.map((emp) => (
-              <li className="employee-item" key={emp.id}>
-                <div className="employee-avatar">
-                  {emp.firstName?.[0]}
-                  {emp.lastName?.[0]}
-                </div>
-                <div className="employee-info">
-                  <span className="employee-name">
-                    {emp.firstName} {emp.lastName}
-                  </span>
-                  <span className="employee-position">{emp.position}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+       {isAdmin && (
+  <section className="card">
+    <h2 className="card-title">Employees</h2>
+    <ul className="employee-list">
+      {employees.map((emp) => (
+        <li className="employee-item" key={emp.id}>
+          <div className="employee-avatar">
+            {emp.firstName?.[0]}
+            {emp.lastName?.[0]}
+          </div>
+          <div className="employee-info">
+            <span className="employee-name">
+              {emp.firstName} {emp.lastName}
+            </span>
+            <span className="employee-position">{emp.position}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
         <section className="card">
           <h2 className="card-title">Performance Dashboard</h2>
           <Dashboard />
