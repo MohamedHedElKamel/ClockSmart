@@ -47,17 +47,30 @@ useEffect(() => {
       .catch((error) => console.error('Error fetching employees:', error));
   };
 
-  const fetchCurrentEmployee = () => {
-    fetch('http://localhost:8080/api/employees/me', {
-      headers: { Authorization: `Bearer ${keycloak.token}` },
+const fetchCurrentEmployee = () => {
+  fetch('http://localhost:8080/api/employees/me', {
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      setCurrentEmployee(data);
+      fetchLeaveRequests(data.id);
+      checkClockInStatus(data.id);
     })
-      .then((response) => response.json())
-      .then((data) => {
-        setCurrentEmployee(data);
-        fetchLeaveRequests(data.id);
-      })
-      .catch((error) => console.error('Error fetching current employee:', error));
-  };
+    .catch((error) => console.error('Error fetching current employee:', error));
+};
+
+const checkClockInStatus = (employeeId) => {
+  fetch(`http://localhost:8080/api/attendance/history/${employeeId}`, {
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => response.json())
+    .then((records) => {
+      const hasOpenSession = records.some((r) => r.clockOut === null);
+      setIsClockedIn(hasOpenSession);
+    })
+    .catch((error) => console.error('Error checking clock-in status:', error));
+};
 
   const fetchLeaveRequests = (employeeId) => {
     fetch(`http://localhost:8080/api/leave-requests/employee/${employeeId}`, {
