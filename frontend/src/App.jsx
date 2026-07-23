@@ -3,6 +3,7 @@ import keycloak from './keycloak';
 import './App.css';
 import Dashboard from './Dashboard';
 import AiChat from './AiChat';
+import AdminPanel from './AdminPanel';
 
 function App() {
   const [message, setMessage] = useState('Loading...');
@@ -66,20 +67,31 @@ const checkClockInStatus = (employeeId) => {
   })
     .then((response) => response.json())
     .then((records) => {
-      const hasOpenSession = records.some((r) => r.clockOut === null);
-      setIsClockedIn(hasOpenSession);
+      if (Array.isArray(records)) {
+        const hasOpenSession = records.some((r) => r.clockOut === null);
+        setIsClockedIn(hasOpenSession);
+      } else {
+        console.error('Unexpected response for attendance history:', records);
+      }
     })
     .catch((error) => console.error('Error checking clock-in status:', error));
 };
 
-  const fetchLeaveRequests = (employeeId) => {
-    fetch(`http://localhost:8080/api/leave-requests/employee/${employeeId}`, {
-      headers: { Authorization: `Bearer ${keycloak.token}` },
+const fetchLeaveRequests = (employeeId) => {
+  fetch(`http://localhost:8080/api/leave-requests/employee/${employeeId}`, {
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        setLeaveRequests(data);
+      } else {
+        console.error('Unexpected response for leave requests:', data);
+        setLeaveRequests([]);
+      }
     })
-      .then((response) => response.json())
-      .then((data) => setLeaveRequests(data))
-      .catch((error) => console.error('Error fetching leave requests:', error));
-  };
+    .catch((error) => console.error('Error fetching leave requests:', error));
+};
 
  const handleClockIn = () => {
   fetch(`http://localhost:8080/api/attendance/clock-in/${currentEmployee.id}`, {
@@ -290,6 +302,12 @@ const checkClockInStatus = (employeeId) => {
         </li>
       ))}
     </ul>
+  </section>
+)}
+{isAdmin && (
+  <section className="card">
+    <h2 className="card-title">Admin: Leave Requests</h2>
+    <AdminPanel />
   </section>
 )}
         <section className="card">
