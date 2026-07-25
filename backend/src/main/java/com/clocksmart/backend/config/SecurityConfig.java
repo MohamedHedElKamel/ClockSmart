@@ -22,6 +22,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/hello").permitAll()
                         .requestMatchers("/api/leave-requests/*/status").hasRole("admin")
                         .requestMatchers("/api/employees").hasRole("admin")
+                        .requestMatchers("/api/employees/create-with-account").hasRole("admin")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new KeycloakRoleConverter())));
@@ -41,4 +42,7 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
+
+
+
 }

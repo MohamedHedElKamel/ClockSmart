@@ -35,4 +35,22 @@ public class EmployeeService {
                 .orElseThrow(() -> new IllegalArgumentException("No employee found for username: " + username));
     }
 
+    @Autowired
+    private KeycloakAdminService keycloakAdminService;
+
+    public Employee createEmployeeWithAccount(Employee employee, String password, String role) {
+        keycloakAdminService.createUser(
+                employee.getUsername(),
+                employee.getEmail(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                password,
+                role
+        );
+
+        return employeeRepository.save(employee);
+    }
+
+
+
 }

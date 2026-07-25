@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
+import java.util.Map;
 
 import java.util.List;
 
@@ -42,5 +43,18 @@ public class EmployeeController {
         String username = jwt.getClaimAsString("preferred_username");
         return employeeService.getByUsername(username);
     }
+
+    @PostMapping("/create-with-account")
+    public Employee createEmployeeWithAccount(@RequestBody Map<String, String> body) {
+        Employee employee = new Employee();
+        employee.setUsername(body.get("username"));
+        employee.setEmail(body.get("email"));
+        employee.setFirstName(body.get("firstName"));
+        employee.setLastName(body.get("lastName"));
+        employee.setPosition(body.get("position"));
+
+        return employeeService.createEmployeeWithAccount(employee, body.get("password"), body.get("role"));
+    }
+
 
 }
