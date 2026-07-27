@@ -17,6 +17,7 @@ function App() {
   const [now, setNow] = useState(new Date());
   const [isClockedIn, setIsClockedIn] = useState(false);
   const isAdmin = keycloak.hasRealmRole('admin');
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
 
 useEffect(() => {
   fetch('http://localhost:8080/api/hello')
@@ -70,6 +71,8 @@ const checkClockInStatus = (employeeId) => {
       if (Array.isArray(records)) {
         const hasOpenSession = records.some((r) => r.clockOut === null);
         setIsClockedIn(hasOpenSession);
+        
+        setAttendanceHistory([...records].reverse());
       } else {
         console.error('Unexpected response for attendance history:', records);
       }
@@ -105,7 +108,13 @@ const fetchLeaveRequests = (employeeId) => {
     .then((data) => {
       setStatus(`Clocked in at ${data.clockIn}`);
       setIsClockedIn(true);
+      
     })
+    .then((data) => {
+  setStatus(`Clocked in at ${data.clockIn}`);
+  setIsClockedIn(true);
+  checkClockInStatus(currentEmployee.id);
+})
     .catch((error) => setStatus(`Error: ${error.message}`));
 };
 
@@ -122,7 +131,13 @@ const fetchLeaveRequests = (employeeId) => {
       setStatus(`Clocked out at ${data.clockOut}`);
       setIsClockedIn(false);
     })
+    .then((data) => {
+  setStatus(`Clocked in at ${data.clockIn}`);
+  setIsClockedIn(true);
+  checkClockInStatus(currentEmployee.id);
+})
     .catch((error) => setStatus(`Error: ${error.message}`));
+
 };
 
   const handleLeaveSubmit = (e) => {
@@ -220,6 +235,25 @@ const fetchLeaveRequests = (employeeId) => {
           {status && <p className="punch-status">{status}</p>}
           <p className="punch-backend">Backend status: {message}</p>
         </section>
+
+        <section className="card">
+  <h2 className="card-title">My Attendance History</h2>
+  {attendanceHistory.length === 0 ? (
+    <p className="empty-state">No attendance records yet.</p>
+  ) : (
+    <ul className="leave-list">
+      {attendanceHistory.map((rec) => (
+        <li className="leave-item" key={rec.id}>
+          <div className="leave-dates">
+            <span>{new Date(rec.clockIn).toLocaleString()}</span>
+            <span className="leave-arrow">→</span>
+            <span>{rec.clockOut ? new Date(rec.clockOut).toLocaleString() : 'Still clocked in'}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
 
         <div className="grid-two">
           <section className="card">
