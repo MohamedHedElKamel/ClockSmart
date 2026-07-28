@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import keycloak from './keycloak';
 
-function Layout({ isAdmin, currentEmployee }) {
+function Layout({ isAdmin, currentEmployee, context })  {
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -49,7 +49,7 @@ function Layout({ isAdmin, currentEmployee }) {
       </aside>
 
       <main className="content">
-        <Outlet />
+       <Outlet context={context} />
       </main>
     </div>
   );
