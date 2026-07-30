@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import keycloak from './keycloak';
 
 function AiChat() {
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   const handleAsk = (e) => {
     e.preventDefault();
@@ -34,43 +39,42 @@ function AiChat() {
   };
 
   return (
-    <div>
-      <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '10px' }}>
-        {messages.length === 0 && <p style={{ opacity: 0.6 }}>Ask me about your leave requests or attendance!</p>}
+    <div className="chat-container">
+      <div className="chat-messages">
+        {messages.length === 0 && (
+          <p className="empty-state">Ask me about your leave requests or attendance!</p>
+        )}
+
         {messages.map((msg, index) => (
-          <div
-            key={index}
-            style={{
-              textAlign: msg.role === 'user' ? 'right' : 'left',
-              margin: '8px 0',
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-block',
-                padding: '8px 12px',
-                borderRadius: '12px',
-                background: msg.role === 'user' ? '#60a5fa' : '#e5e7eb',
-                color: msg.role === 'user' ? 'white' : 'black',
-                maxWidth: '80%',
-              }}
-            >
+          <div key={index} className={`chat-row ${msg.role === 'user' ? 'chat-row-user' : 'chat-row-ai'}`}>
+            {msg.role === 'ai' && <div className="chat-avatar">⏱</div>}
+            <div className={`chat-bubble ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`}>
               {msg.text}
-            </span>
+            </div>
           </div>
         ))}
-        {loading && <p style={{ opacity: 0.6 }}>Thinking...</p>}
+
+        {loading && (
+          <div className="chat-row chat-row-ai">
+            <div className="chat-avatar">⏱</div>
+            <div className="chat-bubble chat-bubble-ai chat-typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        )}
+
+        <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleAsk} style={{ display: 'flex', gap: '8px' }}>
+      <form onSubmit={handleAsk} className="chat-input-row">
         <input
           type="text"
+          className="chat-input"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Ask a question..."
-          style={{ flex: 1 }}
         />
-        <button type="submit" disabled={loading}>
+        <button type="submit" className="btn btn-primary" disabled={loading}>
           Send
         </button>
       </form>

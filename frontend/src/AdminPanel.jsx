@@ -81,63 +81,87 @@ function AdminPanel() {
   return (
     <div>
       <h3>Create New Employee</h3>
-      <form onSubmit={handleCreateUser} style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
-          <input
-            type="text"
-            placeholder="First name"
-            value={newUser.firstName}
-            onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Last name"
-            value={newUser.lastName}
-            onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Username"
-            value={newUser.username}
-            onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={newUser.email}
-            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Position"
-            value={newUser.position}
-            onChange={(e) => setNewUser({ ...newUser, position: e.target.value })}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Temporary password"
-            value={newUser.password}
-            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-            required
-          />
-          <select
-            value={newUser.role}
-            onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-          >
-            <option value="employee">Employee</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <button className="btn btn-primary" type="submit">
-          Create Employee
-        </button>
-        {createStatus && <p>{createStatus}</p>}
-      </form>
+      <form onSubmit={handleCreateUser} className="leave-form">
+  <div className="field-row">
+    <label className="field">
+      <span className="field-label">First name</span>
+      <input
+        type="text"
+        value={newUser.firstName}
+        onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
+        required
+      />
+    </label>
+    <label className="field">
+      <span className="field-label">Last name</span>
+      <input
+        type="text"
+        value={newUser.lastName}
+        onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
+        required
+      />
+    </label>
+  </div>
+
+  <div className="field-row">
+    <label className="field">
+      <span className="field-label">Username</span>
+      <input
+        type="text"
+        value={newUser.username}
+        onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+        required
+      />
+    </label>
+    <label className="field">
+      <span className="field-label">Email</span>
+      <input
+        type="email"
+        value={newUser.email}
+        onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+        required
+      />
+    </label>
+  </div>
+
+  <div className="field-row">
+    <label className="field">
+      <span className="field-label">Position</span>
+      <input
+        type="text"
+        value={newUser.position}
+        onChange={(e) => setNewUser({ ...newUser, position: e.target.value })}
+        required
+      />
+    </label>
+    <label className="field">
+      <span className="field-label">Temporary password</span>
+      <input
+        type="password"
+        value={newUser.password}
+        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+        required
+      />
+    </label>
+  </div>
+
+  <label className="field">
+    <span className="field-label">Role</span>
+    <select
+      className="form-control"
+      value={newUser.role}
+      onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+    >
+      <option value="employee">Employee</option>
+      <option value="admin">Admin</option>
+    </select>
+  </label>
+
+  <button className="btn btn-primary" type="submit">
+    Create Employee
+  </button>
+  {createStatus && <p className="empty-state">{createStatus}</p>}
+</form>
 
       <h3>Leave Requests</h3>
       {requests.length === 0 ? (
