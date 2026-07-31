@@ -14,6 +14,13 @@ import keycloak from './keycloak.js';
 keycloak.init({ onLoad: 'login-required' })
   .then((authenticated) => {
     if (authenticated) {
+      setInterval(() => {
+        keycloak.updateToken(70).catch(() => {
+          console.warn('Failed to refresh token, logging out.');
+          keycloak.logout();
+        });
+      }, 60000);
+
       createRoot(document.getElementById('root')).render(
         <StrictMode>
           <BrowserRouter>
