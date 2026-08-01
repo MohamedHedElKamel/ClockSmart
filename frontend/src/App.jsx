@@ -3,6 +3,7 @@ import keycloak from './keycloak';
 import Layout from './Layout';
 import './App.css';
 
+
 function App() {
   const [message, setMessage] = useState('Loading...');
   const [employees, setEmployees] = useState([]);
@@ -15,6 +16,8 @@ function App() {
   const [now, setNow] = useState(new Date());
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
 
   const isAdmin = keycloak.hasRealmRole('admin');
 
@@ -167,23 +170,24 @@ function App() {
     );
   }
 
-  const contextValue = {
-    message,
-    employees,
-    status,
-    leaveRequests,
-    startDate, setStartDate,
-    endDate, setEndDate,
-    reason, setReason,
-    currentEmployee,
-    now,
-    isClockedIn,
-    attendanceHistory,
-    handleClockIn,
-    handleClockOut,
-    handleLeaveSubmit,
-  };
-
+const contextValue = {
+  message,
+  employees,
+  status,
+  leaveRequests,
+  startDate, setStartDate,
+  endDate, setEndDate,
+  reason, setReason,
+  currentEmployee,
+  now,
+  isClockedIn,
+  attendanceHistory,
+  handleClockIn,
+  handleClockOut,
+  handleLeaveSubmit,
+  chatMessages, setChatMessages,
+  chatLoading, setChatLoading,
+};
   return (
     <Layout isAdmin={isAdmin} currentEmployee={currentEmployee} context={contextValue} />
   );

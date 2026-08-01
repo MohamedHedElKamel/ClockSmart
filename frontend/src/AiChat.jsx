@@ -1,23 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import keycloak from './keycloak';
 
 function AiChat() {
+  const { chatMessages, setChatMessages, chatLoading, setChatLoading } = useOutletContext();
   const [question, setQuestion] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [chatMessages, chatLoading]);
 
   const handleAsk = (e) => {
     e.preventDefault();
     if (!question.trim()) return;
 
     const userMessage = { role: 'user', text: question };
-    setMessages((prev) => [...prev, userMessage]);
-    setLoading(true);
+    setChatMessages((prev) => [...prev, userMessage]);
+    setChatLoading(true);
     setQuestion('');
 
     fetch('http://localhost:8080/api/ai/ask', {
@@ -30,22 +30,22 @@ function AiChat() {
     })
       .then((response) => response.json())
       .then((data) => {
-        setMessages((prev) => [...prev, { role: 'ai', text: data.answer }]);
+        setChatMessages((prev) => [...prev, { role: 'ai', text: data.answer }]);
       })
       .catch(() => {
-        setMessages((prev) => [...prev, { role: 'ai', text: 'Sorry, something went wrong.' }]);
+        setChatMessages((prev) => [...prev, { role: 'ai', text: 'Sorry, something went wrong.' }]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => setChatLoading(false));
   };
 
   return (
     <div className="chat-container">
       <div className="chat-messages">
-        {messages.length === 0 && (
+        {chatMessages.length === 0 && (
           <p className="empty-state">Ask me about your leave requests or attendance!</p>
         )}
 
-        {messages.map((msg, index) => (
+        {chatMessages.map((msg, index) => (
           <div key={index} className={`chat-row ${msg.role === 'user' ? 'chat-row-user' : 'chat-row-ai'}`}>
             {msg.role === 'ai' && <div className="chat-avatar">⏱</div>}
             <div className={`chat-bubble ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`}>
@@ -54,7 +54,7 @@ function AiChat() {
           </div>
         ))}
 
-        {loading && (
+        {chatLoading && (
           <div className="chat-row chat-row-ai">
             <div className="chat-avatar">⏱</div>
             <div className="chat-bubble chat-bubble-ai chat-typing">
@@ -74,7 +74,7 @@ function AiChat() {
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Ask a question..."
         />
-        <button type="submit" className="btn btn-primary" disabled={loading}>
+        <button type="submit" className="btn btn-primary" disabled={chatLoading}>
           Send
         </button>
       </form>
