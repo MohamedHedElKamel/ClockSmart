@@ -26,8 +26,11 @@ public class AiAgentController {
         String username = jwt.getClaimAsString("preferred_username");
         Employee employee = employeeService.getByUsername(username);
 
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_admin"));
+
         String question = body.get("question");
-        String answer = aiAgentService.askQuestion(employee, question);
+        String answer = aiAgentService.askQuestion(employee, question, isAdmin);
 
         return Map.of("answer", answer);
     }
