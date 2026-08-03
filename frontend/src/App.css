@@ -633,3 +633,53 @@ select.form-control {
   background: var(--white);
   color: var(--ink);
 }
+
+/* ---------- Home hero banner ---------- */
+
+.hero-banner {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 280px;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeIn 0.5s ease;
+}
+
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80');  background-size: cover;
+  background-position: center;
+}
+
+.hero-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(28, 37, 65, 0.15) 0%, rgba(28, 37, 65, 0.88) 100%);
+}
+
+.hero-overlay {
+  position: relative;
+  z-index: 1;
+  padding: 32px;
+  color: #ffffff;
+}
+
+.hero-title {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.hero-subtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 520px;
+  margin: 0;
+  line-height: 1.5;
+}
