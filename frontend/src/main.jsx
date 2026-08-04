@@ -10,6 +10,7 @@ import Dashboard from './Dashboard.jsx';
 import AiChat from './AiChat.jsx';
 import AdminPanel from './AdminPanel.jsx';
 import keycloak from './keycloak.js';
+import { ToastProvider } from './Toast.jsx';
 
 keycloak.init({ onLoad: 'login-required' })
   .then((authenticated) => {
@@ -23,6 +24,7 @@ keycloak.init({ onLoad: 'login-required' })
 
       createRoot(document.getElementById('root')).render(
         <StrictMode>
+          <ToastProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<App />}>
@@ -35,6 +37,7 @@ keycloak.init({ onLoad: 'login-required' })
               </Route>
             </Routes>
           </BrowserRouter>
+          </ToastProvider>
         </StrictMode>
       );
     } else {
