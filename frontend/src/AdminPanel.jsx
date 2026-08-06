@@ -13,6 +13,7 @@ function AdminPanel() {
     role: 'employee',
   });
   const [createStatus, setCreateStatus] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetchAllRequests();
@@ -41,35 +42,38 @@ function AdminPanel() {
   };
 
   const handleCreateUser = (e) => {
-    e.preventDefault();
-    setCreateStatus('Creating...');
+  e.preventDefault();
+  setCreating(true);
 
-    fetch('http://localhost:8080/api/employees/create-with-account', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${keycloak.token}`,
-      },
-      body: JSON.stringify(newUser),
+  fetch('http://localhost:8080/api/employees/create-with-account', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${keycloak.token}`,
+    },
+    body: JSON.stringify(newUser),
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Failed to create user');
+      return response.json();
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Failed to create user');
-        return response.json();
-      })
-      .then(() => {
-        setCreateStatus(`Successfully created ${newUser.firstName} ${newUser.lastName}`);
-        setNewUser({
-          username: '',
-          email: '',
-          firstName: '',
-          lastName: '',
-          position: '',
-          password: '',
-          role: 'employee',
-        });
-      })
-      .catch((error) => setCreateStatus(`Error: ${error.message}`));
-  };
+    .then(() => {
+      showToast(`${newUser.firstName} ${newUser.lastName} created successfully!`, 'success');
+      setNewUser({
+        username: '',
+        email: '',
+        firstName: '',
+        lastName: '',
+        position: '',
+        password: '',
+        role: 'employee',
+      });
+    })
+    .catch((error) => {
+      showToast(`Failed to create employee: ${error.message}`, 'error');
+    })
+    .finally(() => setCreating(false));
+};
 
   const statusPillClass = (s) => {
     const normalized = (s || '').toLowerCase();
@@ -157,9 +161,9 @@ function AdminPanel() {
     </select>
   </label>
 
-  <button className="btn btn-primary" type="submit">
-    Create Employee
-  </button>
+  <button className="btn btn-primary" type="submit" disabled={creating}>
+  {creating ? 'Creating...' : 'Create Employee'}
+</button>
   {createStatus && <p className="empty-state">{createStatus}</p>}
 </form>
 
