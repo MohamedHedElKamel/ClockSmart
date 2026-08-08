@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import keycloak from './keycloak';
 import Layout from './Layout';
+import { useToast } from './Toast';
 import './App.css';
 
 
@@ -18,6 +19,7 @@ function App() {
   const [attendanceHistory, setAttendanceHistory] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const showToast = useToast();
 
   const isAdmin = keycloak.hasRealmRole('admin');
 
@@ -96,68 +98,80 @@ function App() {
       .catch((error) => console.error('Error checking clock-in status:', error));
   };
 
-  const handleClockIn = () => {
-    fetch(`http://localhost:8080/api/attendance/clock-in/${currentEmployee.id}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${keycloak.token}` },
+ const handleClockIn = () => {
+  fetch(`http://localhost:8080/api/attendance/clock-in/${currentEmployee.id}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Clock-in failed');
+      return response.json();
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Clock-in failed');
-        return response.json();
-      })
-      .then((data) => {
-        setStatus(`Clocked in at ${data.clockIn}`);
-        setIsClockedIn(true);
-        checkClockInStatus(currentEmployee.id);
-      })
-      .catch((error) => setStatus(`Error: ${error.message}`));
-  };
+    .then((data) => {
+      setStatus(`Clocked in at ${data.clockIn}`);
+      setIsClockedIn(true);
+      checkClockInStatus(currentEmployee.id);
+      showToast('Clocked in successfully!', 'success');
+    })
+    .catch((error) => {
+      setStatus(`Error: ${error.message}`);
+      showToast('Failed to clock in. Try again.', 'error');
+    });
+};
 
   const handleClockOut = () => {
-    fetch(`http://localhost:8080/api/attendance/clock-out/${currentEmployee.id}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${keycloak.token}` },
+  fetch(`http://localhost:8080/api/attendance/clock-out/${currentEmployee.id}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Clock-out failed');
+      return response.json();
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Clock-out failed');
-        return response.json();
-      })
-      .then((data) => {
-        setStatus(`Clocked out at ${data.clockOut}`);
-        setIsClockedIn(false);
-        checkClockInStatus(currentEmployee.id);
-      })
-      .catch((error) => setStatus(`Error: ${error.message}`));
-  };
-
-  const handleLeaveSubmit = (e) => {
-    e.preventDefault();
-
-    if (new Date(endDate) < new Date(startDate)) {
-      setStatus('Error: End date cannot be before start date.');
-      return;
-    }
-
-    fetch(`http://localhost:8080/api/leave-requests/${currentEmployee.id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${keycloak.token}`,
-      },
-      body: JSON.stringify({ startDate, endDate, reason }),
+    .then((data) => {
+      setStatus(`Clocked out at ${data.clockOut}`);
+      setIsClockedIn(false);
+      checkClockInStatus(currentEmployee.id);
+      showToast('Clocked out successfully!', 'success');
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Leave request failed');
-        return response.json();
-      })
-      .then(() => {
-        setStartDate('');
-        setEndDate('');
-        setReason('');
-        fetchLeaveRequests(currentEmployee.id);
-      })
-      .catch((error) => console.error('Error submitting leave request:', error));
-  };
+    .catch((error) => {
+      setStatus(`Error: ${error.message}`);
+      showToast('Failed to clock out. Try again.', 'error');
+    });
+};
+
+const handleLeaveSubmit = (e) => {
+  e.preventDefault();
+
+  if (new Date(endDate) < new Date(startDate)) {
+    showToast('End date cannot be before start date.', 'error');
+    return;
+  }
+
+  fetch(`http://localhost:8080/api/leave-requests/${currentEmployee.id}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${keycloak.token}`,
+    },
+    body: JSON.stringify({ startDate, endDate, reason }),
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Leave request failed');
+      return response.json();
+    })
+    .then(() => {
+      setStartDate('');
+      setEndDate('');
+      setReason('');
+      fetchLeaveRequests(currentEmployee.id);
+      showToast('Leave request submitted!', 'success');
+    })
+    .catch((error) => {
+      console.error('Error submitting leave request:', error);
+      showToast('Failed to submit leave request.', 'error');
+    });
+};
 
   if (!currentEmployee) {
     return (

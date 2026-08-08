@@ -51,6 +51,18 @@ public class EmployeeService {
         return employeeRepository.save(employee);
     }
 
+    public Employee setEmployeeEnabled(Long employeeId, boolean enabled) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        employee.setEnabled(enabled);
+        employeeRepository.save(employee);
+
+        keycloakAdminService.setUserEnabled(employee.getUsername(), enabled);
+
+        return employee;
+    }
+
 
 
 }

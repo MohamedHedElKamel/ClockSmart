@@ -57,4 +57,10 @@ public class EmployeeController {
     }
 
 
+    @PutMapping("/{id}/enabled")
+    public Employee setEnabled(@PathVariable Long id, @RequestParam boolean enabled) {
+        return employeeService.setEmployeeEnabled(id, enabled);
+    }
+
+
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import keycloak from './keycloak';
+import { useToast } from './Toast';
 
 function AdminPanel() {
   const [requests, setRequests] = useState([]);
@@ -14,6 +15,7 @@ function AdminPanel() {
   });
   const [createStatus, setCreateStatus] = useState('');
   const [creating, setCreating] = useState(false);
+  const showToast = useToast();
 
   useEffect(() => {
     fetchAllRequests();
@@ -28,22 +30,28 @@ function AdminPanel() {
       .catch((error) => console.error('Error fetching leave requests:', error));
   };
 
-  const updateStatus = (requestId, status) => {
-    fetch(`http://localhost:8080/api/leave-requests/${requestId}/status?status=${status}`, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${keycloak.token}` },
+const updateStatus = (requestId, status) => {
+  fetch(`http://localhost:8080/api/leave-requests/${requestId}/status?status=${status}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Failed to update status');
+      return response.json();
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Failed to update status');
-        return response.json();
-      })
-      .then(() => fetchAllRequests())
-      .catch((error) => console.error('Error updating status:', error));
-  };
+    .then(() => {
+      fetchAllRequests();
+      showToast(`Leave request ${status.toLowerCase()}.`, 'success');
+    })
+    .catch((error) => {
+      console.error('Error updating status:', error);
+      showToast('Failed to update leave request.', 'error');
+    });
+};
 
-  const handleCreateUser = (e) => {
+const handleCreateUser = (e) => {
   e.preventDefault();
-  setCreating(true);
+  setCreateStatus('Creating...');
 
   fetch('http://localhost:8080/api/employees/create-with-account', {
     method: 'POST',
@@ -58,6 +66,7 @@ function AdminPanel() {
       return response.json();
     })
     .then(() => {
+      setCreateStatus('');
       showToast(`${newUser.firstName} ${newUser.lastName} created successfully!`, 'success');
       setNewUser({
         username: '',
@@ -70,9 +79,9 @@ function AdminPanel() {
       });
     })
     .catch((error) => {
+      setCreateStatus('');
       showToast(`Failed to create employee: ${error.message}`, 'error');
-    })
-    .finally(() => setCreating(false));
+    });
 };
 
   const statusPillClass = (s) => {

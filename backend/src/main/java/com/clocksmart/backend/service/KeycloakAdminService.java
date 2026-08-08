@@ -93,4 +93,32 @@ public class KeycloakAdminService {
 
         restTemplate.postForEntity(assignUrl, assignRequest, Void.class);
     }
+
+
+    public void setUserEnabled(String username, boolean enabled) {
+        String token = getAdminAccessToken();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<Void> getRequest = new HttpEntity<>(headers);
+
+        String searchUrl = usersUrl + "?username=" + username + "&exact=true";
+        ResponseEntity<List> searchResponse = restTemplate.exchange(searchUrl, HttpMethod.GET, getRequest, List.class);
+
+        List<Map> users = searchResponse.getBody();
+        if (users == null || users.isEmpty()) {
+            throw new IllegalArgumentException("Keycloak user not found: " + username);
+        }
+
+        String userId = (String) users.get(0).get("id");
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Map<String, Object> update = Map.of("enabled", enabled);
+        HttpEntity<Map<String, Object>> updateRequest = new HttpEntity<>(update, headers);
+
+        restTemplate.exchange(usersUrl + "/" + userId, HttpMethod.PUT, updateRequest, Void.class);
+    }
+
+
+
 }

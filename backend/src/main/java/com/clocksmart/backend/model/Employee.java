@@ -15,6 +15,15 @@ public class Employee {
     private String email;
     private String position;
     private String username;
+    private boolean enabled = true;
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public String getUsername() {
         return username;
