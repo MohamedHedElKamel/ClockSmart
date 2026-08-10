@@ -24,13 +24,6 @@ function App() {
   const isAdmin = keycloak.hasRealmRole('admin');
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/hello')
-      .then((response) => response.text())
-      .then((data) => setMessage(data))
-      .catch((error) => {
-        console.error('Error fetching backend:', error);
-        setMessage('Failed to reach backend');
-      });
 
     if (isAdmin) {
       fetchEmployees();

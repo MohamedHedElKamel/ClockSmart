@@ -2,8 +2,36 @@ import { useState, useEffect } from 'react';
 import keycloak from './keycloak';
 import { useToast } from './Toast';
 
+const getValidationErrors = (user) => {
+  const errors = {};
+
+  if (!/^[a-zA-Z0-9_.]{3,20}$/.test(user.username)) {
+    errors.username = 'Username must be 3-20 characters (letters, numbers, dots, underscores only).';
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
+    errors.email = 'Please enter a valid email address.';
+  }
+  if (user.password.length < 6) {
+    errors.password = 'Password must be at least 6 characters.';
+  }
+  if (!user.firstName.trim()) {
+    errors.firstName = 'First name is required.';
+  }
+  if (!user.lastName.trim()) {
+    errors.lastName = 'Last name is required.';
+  }
+  if (!user.position.trim()) {
+    errors.position = 'Position is required.';
+  }
+
+  return errors;
+};
+
+
+
 function AdminPanel() {
   const [requests, setRequests] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [newUser, setNewUser] = useState({
     username: '',
     email: '',
@@ -16,11 +44,28 @@ function AdminPanel() {
   const [createStatus, setCreateStatus] = useState('');
   const [creating, setCreating] = useState(false);
   const showToast = useToast();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [touched, setTouched] = useState({});
+  const liveErrors = getValidationErrors(newUser);
+ useEffect(() => {
+  fetchAllRequests();
+  fetchEmployees();
+}, []);
 
-  useEffect(() => {
-    fetchAllRequests();
-  }, []);
 
+const markTouched = (field) => {
+  setTouched((prev) => ({ ...prev, [field]: true }));
+};
+
+
+const fetchEmployees = () => {
+  fetch('http://localhost:8080/api/employees', {
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => response.json())
+    .then((data) => setEmployees(data))
+    .catch((error) => console.error('Error fetching employees:', error));
+};
   const fetchAllRequests = () => {
     fetch('http://localhost:8080/api/leave-requests', {
       headers: { Authorization: `Bearer ${keycloak.token}` },
@@ -49,9 +94,39 @@ const updateStatus = (requestId, status) => {
     });
 };
 
+const toggleEnabled = (employeeId, currentlyEnabled) => {
+  fetch(`http://localhost:8080/api/employees/${employeeId}/enabled?enabled=${!currentlyEnabled}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${keycloak.token}` },
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Failed to update employee status');
+      return response.json();
+    })
+    .then(() => {
+      fetchEmployees();
+      showToast(`Employee ${!currentlyEnabled ? 'activated' : 'deactivated'}.`, 'success');
+    })
+    .catch((error) => {
+      console.error('Error toggling employee status:', error);
+      showToast('Failed to update employee status.', 'error');
+    });
+};
+
+
 const handleCreateUser = (e) => {
   e.preventDefault();
-  setCreateStatus('Creating...');
+
+  setTouched({
+    username: true, email: true, password: true,
+    firstName: true, lastName: true, position: true,
+  });
+
+  if (Object.keys(liveErrors).length > 0) {
+    return;
+  }
+
+  setCreating(true);
 
   fetch('http://localhost:8080/api/employees/create-with-account', {
     method: 'POST',
@@ -66,22 +141,19 @@ const handleCreateUser = (e) => {
       return response.json();
     })
     .then(() => {
-      setCreateStatus('');
       showToast(`${newUser.firstName} ${newUser.lastName} created successfully!`, 'success');
       setNewUser({
-        username: '',
-        email: '',
-        firstName: '',
-        lastName: '',
-        position: '',
-        password: '',
-        role: 'employee',
+        username: '', email: '', firstName: '', lastName: '',
+        position: '', password: '', role: 'employee',
       });
+      setTouched({});
+      setShowCreateForm(false);
+      fetchEmployees();
     })
     .catch((error) => {
-      setCreateStatus('');
       showToast(`Failed to create employee: ${error.message}`, 'error');
-    });
+    })
+    .finally(() => setCreating(false));
 };
 
   const statusPillClass = (s) => {
@@ -93,88 +165,160 @@ const handleCreateUser = (e) => {
 
   return (
     <div>
-      <h3>Create New Employee</h3>
-      <form onSubmit={handleCreateUser} className="leave-form">
-  <div className="field-row">
-    <label className="field">
-      <span className="field-label">First name</span>
-      <input
-        type="text"
-        value={newUser.firstName}
-        onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
-        required
-      />
-    </label>
-    <label className="field">
-      <span className="field-label">Last name</span>
-      <input
-        type="text"
-        value={newUser.lastName}
-        onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
-        required
-      />
-    </label>
+      <div className="form-toggle-header">
+  <h3 style={{ margin: 0 }}>Employees</h3>
+  <button
+    className="btn btn-primary"
+    onClick={() => setShowCreateForm((prev) => !prev)}
+  >
+    {showCreateForm ? 'Cancel' : '+ Create Employee'}
+  </button>
+</div>
+
+<div className={`collapsible ${showCreateForm ? 'collapsible-open' : ''}`}>
+  <div className="collapsible-inner">
+    <form onSubmit={handleCreateUser} className="leave-form">
+      <div className="field-row">
+        <label className="field">
+          <span className="field-label">First name</span>
+          <input
+            type="text"
+            value={newUser.firstName}
+            onChange={(e) => {
+              setNewUser({ ...newUser, firstName: e.target.value });
+              markTouched('firstName');
+            }}
+            onBlur={() => markTouched('firstName')}
+          />
+          {touched.firstName && liveErrors.firstName && (
+            <span className="field-error">{liveErrors.firstName}</span>
+          )}
+        </label>
+        <label className="field">
+          <span className="field-label">Last name</span>
+          <input
+            type="text"
+            value={newUser.lastName}
+            onChange={(e) => {
+              setNewUser({ ...newUser, lastName: e.target.value });
+              markTouched('lastName');
+            }}
+            onBlur={() => markTouched('lastName')}
+          />
+          {touched.lastName && liveErrors.lastName && (
+            <span className="field-error">{liveErrors.lastName}</span>
+          )}
+        </label>
+      </div>
+
+      <div className="field-row">
+        <label className="field">
+          <span className="field-label">Username</span>
+          <input
+            type="text"
+            value={newUser.username}
+            onChange={(e) => {
+              setNewUser({ ...newUser, username: e.target.value });
+              markTouched('username');
+            }}
+            onBlur={() => markTouched('username')}
+          />
+          {touched.username && liveErrors.username && (
+            <span className="field-error">{liveErrors.username}</span>
+          )}
+        </label>
+        <label className="field">
+          <span className="field-label">Email</span>
+          <input
+            type="email"
+            value={newUser.email}
+            onChange={(e) => {
+              setNewUser({ ...newUser, email: e.target.value });
+              markTouched('email');
+            }}
+            onBlur={() => markTouched('email')}
+          />
+          {touched.email && liveErrors.email && (
+            <span className="field-error">{liveErrors.email}</span>
+          )}
+        </label>
+      </div>
+
+      <div className="field-row">
+        <label className="field">
+          <span className="field-label">Position</span>
+          <input
+            type="text"
+            value={newUser.position}
+            onChange={(e) => {
+              setNewUser({ ...newUser, position: e.target.value });
+              markTouched('position');
+            }}
+            onBlur={() => markTouched('position')}
+          />
+          {touched.position && liveErrors.position && (
+            <span className="field-error">{liveErrors.position}</span>
+          )}
+        </label>
+        <label className="field">
+          <span className="field-label">Temporary password</span>
+          <input
+            type="password"
+            value={newUser.password}
+            onChange={(e) => {
+              setNewUser({ ...newUser, password: e.target.value });
+              markTouched('password');
+            }}
+            onBlur={() => markTouched('password')}
+          />
+          {touched.password && liveErrors.password && (
+            <span className="field-error">{liveErrors.password}</span>
+          )}
+        </label>
+      </div>
+
+      <label className="field">
+        <span className="field-label">Role</span>
+        <select
+          className="form-control"
+          value={newUser.role}
+          onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+        >
+          <option value="employee">Employee</option>
+          <option value="admin">Admin</option>
+        </select>
+      </label>
+
+      <button className="btn btn-primary" type="submit" disabled={creating}>
+        {creating ? 'Creating...' : 'Create Employee'}
+      </button>
+    </form>
   </div>
+</div>
 
-  <div className="field-row">
-    <label className="field">
-      <span className="field-label">Username</span>
-      <input
-        type="text"
-        value={newUser.username}
-        onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-        required
-      />
-    </label>
-    <label className="field">
-      <span className="field-label">Email</span>
-      <input
-        type="email"
-        value={newUser.email}
-        onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-        required
-      />
-    </label>
-  </div>
-
-  <div className="field-row">
-    <label className="field">
-      <span className="field-label">Position</span>
-      <input
-        type="text"
-        value={newUser.position}
-        onChange={(e) => setNewUser({ ...newUser, position: e.target.value })}
-        required
-      />
-    </label>
-    <label className="field">
-      <span className="field-label">Temporary password</span>
-      <input
-        type="password"
-        value={newUser.password}
-        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-        required
-      />
-    </label>
-  </div>
-
-  <label className="field">
-    <span className="field-label">Role</span>
-    <select
-      className="form-control"
-      value={newUser.role}
-      onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-    >
-      <option value="employee">Employee</option>
-      <option value="admin">Admin</option>
-    </select>
-  </label>
-
-  <button className="btn btn-primary" type="submit" disabled={creating}>
-  {creating ? 'Creating...' : 'Create Employee'}
-</button>
-  {createStatus && <p className="empty-state">{createStatus}</p>}
-</form>
+<h3>All Employees</h3>
+<ul className="employee-list" style={{ marginBottom: '24px' }}>
+  {employees.map((emp) => (
+    <li className="employee-item" key={emp.id}>
+      <div className="employee-avatar">
+        {emp.firstName?.[0]}
+        {emp.lastName?.[0]}
+      </div>
+      <div className="employee-info" style={{ flex: 1 }}>
+        <span className="employee-name">
+          {emp.firstName} {emp.lastName}
+        </span>
+        <span className="employee-position">{emp.position}</span>
+      </div>
+      <button
+        className="btn btn-ghost"
+        onClick={() => toggleEnabled(emp.id, emp.enabled)}
+      >
+        {emp.enabled ? 'Deactivate' : 'Activate'}
+      </button>
+    </li>
+  ))}
+</ul>
 
       <h3>Leave Requests</h3>
       {requests.length === 0 ? (
